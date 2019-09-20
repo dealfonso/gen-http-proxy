@@ -1,0 +1,12 @@
+{
+  "name": "gen-http-proxy",
+  "version": "1.0.0",
+  "description": "Generic http(s) proxy to an user defined <host>:<port>, and token authentication",
+  "main": "gen-http-proxy.js",
+  "dependencies": {
+    "cookies": "^0.7.3",
+    "http-proxy": "^1.18.0"
+  },
+  "author": "Carlos A. (caralla@upv.es)",
+  "license": "Apache 2.0"
+}
