@@ -1,0 +1,8 @@
+@font-face{font-family:Poppins;font-style:normal;font-weight:400;src:url(../vendor/poppins/poppins-v8-latin-regular.eot);src:local('Poppins Regular'),local('Poppins-Regular'),url(../vendor/poppins/poppins-v8-latin-regular.eot?#iefix) format('embedded-opentype'),url(../vendor/poppins/poppins-v8-latin-regular.woff2) format('woff2'),url(../vendor/poppins/poppins-v8-latin-regular.woff) format('woff'),url(../vendor/poppins/poppins-v8-latin-regular.ttf) format('truetype'),url(../vendor/poppins/poppins-v8-latin-regular.svg#Poppins) format('svg')}
+*{font-family:Poppins,sans-serif}
+body,html{background-color:#99a;height:100%}
+form{background-color:#fff}
+.rounded{border-radius:1rem!important}
+.btn-enter{color:#fff;background-color:#72a0e4;border-color:#72a0e4}
+.btn-enter:hover{background-color:#81b4ff;border-color:#81b4ff}
+.v-center{margin-top:auto;margin-bottom:auto}

@@ -27,6 +27,7 @@ const https = require('https');
 const fs = require('fs');
 const url = require('url');
 const Cookies = require('cookies');
+const path = require('path');
 
 // Function that safely converts a string to a number
 function normalizeNumber(val) {
@@ -54,8 +55,19 @@ if (token === undefined) token = require('crypto').randomBytes(16).toString('hex
 var keyfile = process.env['key'] || './server.key';
 var certfile = process.env['cert'] || './server.crt';
 
-// A timeout for the session (default has no timeout)
-var sessiontimeout = normalizeNumber(process.env['sessiontimeout'] || '-1');
+// Use cookies for authentication or not
+var usecookies = process.env['usecookies'] || "true";
+usecookies = (usecookies == "true" || usecookies == "1");
+
+// A timeout for the session (default 60 seconds)
+var sessiontimeout = normalizeNumber(process.env['sessiontimeout'] || '60');
+
+// Use a static server (to serve files under the <staticfolder> folder)
+var staticserver = process.env['staticserver'] || "true";
+staticserver = (staticserver == "true" || staticserver == "1");
+
+// If enabling the static server, which folder should serve
+var staticfolder = process.env['staticfolder'] || './static';
 
 // The target server (provided in the form <ip>:<address>; the default value is localhost:3000)
 var target = process.env['target'] || 'localhost:3000';
@@ -69,41 +81,92 @@ var target = {
 //   the value will be stored in the cookie so that it is not needed to pass the token in the URL again
 function checkauth(req, res) {
   var cookies = new Cookies(req, res);
-  var stored_token = cookies.get('token');
+  var stored_token = null;
   var options = {};
 
-  // If a session timeout is set, will create the options for the cookies
-  if (sessiontimeout > 0) options = {maxAge: sessiontimeout * 1000};
+  if (usecookies) {
+    stored_token = cookies.get('token');
+    // If a session timeout is set, will create the options for the cookies
+    if (sessiontimeout > 0) options = {maxAge: sessiontimeout * 1000};
+  }
 
   // If the token is set to blank, the authentication is disabled
   if (token === "") return true;
 
-  if (stored_token == token) {
-
-    // If the token in the cookie is valid, let's use it
-    cookies.set('token', token, options);
-    return true;
-  }
-
-  // If there is not a valid token, let's get it from the URL
-  var query = url.parse(req.url, true).query;
-  if ((query.token === undefined) || (query.token != token)) {
-    res.statusCode = 401;
-
-    // Show a simple form to be able to provide the token
-    res.end('<html><form method="get"><label for="token">token:</label><input type="text" id="token" name="token"><input type="submit" value="login"></form></html>');
-    return false;
+  if (stored_token != token) {
+    // If there is not a valid token, let's get it from the URL
+    var query = url.parse(req.url, true).query;
+    if ((query.token === undefined) || (query.token != token))
+      return false;
   }
 
   // If arrived up to here, will set the cookie with the valid token
-  cookies.set('token', token, options);
+  if (usecookies)
+    cookies.set('token', token, options);
+
   return true;
+}
+
+function servestatic(req, res) {
+  // Partly taken from https://stackoverflow.com/a/29046869
+
+  // parse URL
+  const parsedUrl = url.parse(req.url);
+  // extract URL path
+  let pathname = `${staticfolder}/${parsedUrl.pathname}`;
+  // based on the URL path, extract the file extention. e.g. .js, .doc, ...
+  const ext = path.parse(pathname).ext;
+  // maps file extention to MIME typere
+  const map = {
+    '.ico': 'image/x-icon',
+    '.html': 'text/html',
+    '.js': 'text/javascript',
+    '.json': 'application/json',
+    '.css': 'text/css',
+    '.png': 'image/png',
+    '.jpg': 'image/jpeg',
+    '.wav': 'audio/wav',
+    '.mp3': 'audio/mpeg',
+    '.svg': 'image/svg+xml',
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword'
+  };
+
+  fs.exists(pathname, function (exist) {
+    if(!exist || fs.statSync(pathname).isDirectory()) {
+      // if the file is not found, return 404
+      res.statusCode = 301;
+      res.setHeader('Location', '/login.html');
+      res.end();
+      return;
+    }
+
+    // read file from file system
+    fs.readFile(pathname, function(err, data){
+      if(err){
+        res.statusCode = 500;
+        res.end(`Error getting the file: ${err}.`);
+      } else {
+        // if the file is found, set Content-type and send data
+        res.setHeader('Content-type', map[ext] || 'text/plain' );
+        res.end(data);
+      }
+    });
+  });
 }
 
 // The handler simply checks for the authentication and proxies the results to the server
 var handler = function (req, res) {
   if (checkauth(req,res))
     proxy.web(req, res);
+  else {
+    if (staticserver) 
+      servestatic(req, res);
+    else {
+      res.statusCode = 401;
+      res.end('Unauthorized');
+    }
+  }
 };
 
 // Create a https or a http server (depending on the options)
@@ -139,6 +202,7 @@ server.on('listening', function() {
   console.log('redirecting to %s:%d', target.host, target.port);
   console.log('access url: %s://%s:%s?token=%s', secure?'https':'http', addr.address, addr.port, token);
   console.log('token: %s', token);
+  console.log('use cookies: %s', usecookies);
   if (sessiontimeout > 0) console.log('expiration: %d', sessiontimeout);
 });
 
