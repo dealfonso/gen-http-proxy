@@ -8,5 +8,11 @@
     "http-proxy": "^1.18.0"
   },
   "author": "Carlos A. (caralla@upv.es)",
-  "license": "Apache 2.0"
+  "license": "Apache 2.0",
+  "bin": {
+    "gen-http-proxy": "gen-http-proxy.js"
+  },
+  "files": [
+    "gen-http-proxy.js", "static", "README.md", "LICENSE"
+  ]
 }

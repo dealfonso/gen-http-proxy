@@ -1,3 +1,4 @@
+#! /usr/bin/env node
 /* 
 
  gen-http-proxy - Generic http(s) proxy with token authentication
@@ -41,12 +42,6 @@ function normalizeNumber(val) {
 var secure = process.env['secure'] || "false";
 secure = (secure == "true" || secure == "1");
 
-// IP address in which the server will listen
-var address = process.env['address'] || "0.0.0.0";
-
-// Port in which the server will listen
-var port = process.env['port'] || '443';
-
 // A token to have access to the server (disabled if set to blank). If no token provided, a random one will be generated
 var token = process.env['token'];
 if (token === undefined) token = require('crypto').randomBytes(16).toString('hex');
@@ -69,13 +64,38 @@ staticserver = (staticserver == "true" || staticserver == "1");
 // If enabling the static server, which folder should serve
 var staticfolder = process.env['staticfolder'] || './static';
 
+// The IP address and port in which the proxy has to listen
+var listen = process.env['server'] || '0.0.0.0:10000';
+
 // The target server (provided in the form <ip>:<address>; the default value is localhost:3000)
 var target = process.env['target'] || 'localhost:3000';
+
+// If there is a single argument
+var args = process.argv.slice(2);
+if (args.length == 1)
+    // The first argument will be the target, and will have precedence over the env var
+    target = args[0];
+else if (args.length == 2) {
+    listen = args[0];
+    target = args[1];
+}
+else if (args.length != 0) {
+    console.log('usage: gen-http-proxy.js [ <target> ]');
+    return -1;
+}
+
 target = target.split(':');
-var target = {
+target = {
   host: target[0] || 'localhost',
   port: normalizeNumber(target[1] || '3000')
 };
+
+listen = listen.split(':');
+listen = {
+  host: listen[0] || '0.0.0.0',
+  port: normalizeNumber(listen[1] || '10000')
+};
+
 
 // The authentication function needs a token. If not provided in the URL, it will be obtained from a cookie. When the token is set to valid
 //   the value will be stored in the cookie so that it is not needed to pass the token in the URL again
@@ -207,4 +227,4 @@ server.on('listening', function() {
 });
 
 // Start the server
-server.listen(port, address);
+server.listen(listen.port, listen.host);
