@@ -134,4 +134,4 @@ cert="$CERTFILE" key="$KEYFILE" secure=$secure /usr/local/bin/gen-http-proxy :10
 
 Now you could point to the URL https://myserver:10443 and will be able to authenticate using the token in the output.
 
-You can find more information on [secure-theia-ide](https://github.com/dealfonso/secure-theia-ide) in its github repository: https://github.com/dealfonso/secure-theia-ide.
+You can find more information on [secure-theia-ide](https://github.com/dealfonso/sec-theia-ide) in its github repository: https://github.com/dealfonso/sec-theia-ide.

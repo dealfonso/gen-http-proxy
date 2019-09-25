@@ -1,6 +1,6 @@
 {
   "name": "gen-http-proxy",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Generic http(s) proxy to an user defined <host>:<port>, and token authentication",
   "main": "gen-http-proxy.js",
   "dependencies": {
